@@ -1,0 +1,50 @@
+name: Sync and Modify with Release
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  sync_and_modify:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Git
+      run: |
+        git config --global user.name timechess
+        git config --global user.email tyc221@ruc.edu.cn
+
+    - name: Fetch upstream changes
+      run: |
+        git remote add upstream https://github.com/EdAyers/ProofWidgets4 # 原始仓库的 URL
+        git fetch upstream
+        git checkout main
+        git merge upstream/main
+
+    - name: Push changes to Gitee
+      run: |
+        git remote add gitee https://gitee.com/time-chess/ProofWidgets4 # Gitee 仓库的 URL
+        git push gitee main
+        
+    - name: Sync Releases
+      run: |
+        GITHUB_TOKEN=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 # 你的 GitHub 令牌
+        GITEE_TOKEN=39d8399147640c266d4eca6bdc8ffcd4 # 你的 Gitee 令牌
+
+        # 同步 GitHub Release 到 Gitee
+        curl -X POST "https://gitee.com/api/v5/repos/time-chess/ProofWidgets4/releases/sync/github?access_token=$GITEE_TOKEN" \
+          -H "Content-Type: application/json" \
+          -d "{\"access_token\":\"$GITHUB_TOKEN\"}"
+          
+    - name: Cleanup
+      run: |
+        git remote remove upstream
+        git remote remove gitee
+
+    env:
+      GITHUB_TOKEN: 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 # GitHub 令牌
+      GITEE_TOKEN: 39d8399147640c266d4eca6bdc8ffcd4 # Gitee 令牌
